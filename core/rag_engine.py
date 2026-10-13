@@ -36,7 +36,7 @@ class CVVectorStore:
 def build_rag_index(cv_text: str, api_key: str) -> CVVectorStore:
     """
     Memecah teks CV menjadi chunk dan membuat indeks vektor FAISS
-    menggunakan GoogleGenerativeAIEmbeddings (gemini-embedding-2 / text-embedding-004).
+    menggunakan GoogleGenerativeAIEmbeddings (gemini-embedding-2 / gemini-embedding-001 dengan output 768 dimensi via MRL).
     """
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=450,
@@ -55,18 +55,27 @@ def build_rag_index(cv_text: str, api_key: str) -> CVVectorStore:
 
     vectorstore = None
     clean_key = api_key.strip().strip('"').strip("'") if api_key else ""
-    embedding_models = ["text-embedding-004", "embedding-001"]
+    
+    # Model embedding aktif: memprioritaskan gemini-embedding-2 (768 dimensi via MRL)
+    embedding_configs = [
+        {"model": "gemini-embedding-2", "output_dimensionality": 768},
+        {"model": "gemini-embedding-001", "output_dimensionality": None},
+    ]
 
-    for model_name in embedding_models:
+    for config in embedding_configs:
         try:
-            embeddings = GoogleGenerativeAIEmbeddings(
-                model=model_name,
-                google_api_key=clean_key
-            )
+            kwargs = {
+                "model": config["model"],
+                "google_api_key": clean_key,
+            }
+            if config["output_dimensionality"]:
+                kwargs["output_dimensionality"] = config["output_dimensionality"]
+
+            embeddings = GoogleGenerativeAIEmbeddings(**kwargs)
             vectorstore = FAISS.from_documents(documents, embeddings)
             break
         except Exception as e:
-            logger.warning(f"Gagal inisialisasi embedding dengan {model_name}: {e}")
+            logger.warning(f"Gagal inisialisasi embedding dengan {config['model']}: {e}")
 
     return CVVectorStore(vectorstore=vectorstore, raw_chunks=documents)
 

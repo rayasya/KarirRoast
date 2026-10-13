@@ -146,35 +146,45 @@ st.markdown(
         border: 1px solid rgba(168, 85, 247, 0.25);
     }
 
-    /* Modern Segmented Tabs */
+    /* Modern Segmented Interactive Tabs (Tampak Jelas Bisa Diklik) */
     div[data-baseweb="tab-list"] {
-        gap: 0.4rem !important;
-        background-color: rgba(19, 24, 38, 0.7) !important;
-        padding: 0.35rem !important;
+        gap: 0.55rem !important;
+        background: linear-gradient(180deg, rgba(20, 26, 42, 0.95) 0%, rgba(13, 17, 28, 0.98) 100%) !important;
+        padding: 0.45rem !important;
         border-radius: 14px !important;
-        border: 1px solid rgba(255, 255, 255, 0.06) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
         margin-bottom: 1.5rem !important;
+        box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
     }
     button[data-baseweb="tab"] {
+        cursor: pointer !important;
         border-radius: 10px !important;
-        padding: 0.55rem 1.15rem !important;
-        font-size: 0.9rem !important;
-        font-weight: 500 !important;
-        color: #94a3b8 !important;
-        background: transparent !important;
-        border: 1px solid transparent !important;
-        transition: all 0.2s ease-in-out !important;
+        padding: 0.65rem 1.25rem !important;
+        font-size: 0.92rem !important;
+        font-weight: 600 !important;
+        color: #cbd5e1 !important;
+        background: rgba(255, 255, 255, 0.04) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
     button[data-baseweb="tab"]:hover {
         color: #ffffff !important;
-        background-color: rgba(255, 255, 255, 0.05) !important;
+        background: rgba(255, 255, 255, 0.12) !important;
+        border-color: rgba(255, 122, 89, 0.55) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 16px rgba(255, 90, 54, 0.22) !important;
     }
     button[data-baseweb="tab"][aria-selected="true"] {
         color: #ffffff !important;
-        background-color: rgba(255, 90, 54, 0.15) !important;
-        border: 1px solid rgba(255, 90, 54, 0.35) !important;
-        font-weight: 600 !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+        background: linear-gradient(135deg, rgba(255, 90, 54, 0.32) 0%, rgba(255, 122, 89, 0.2) 100%) !important;
+        border: 1.5px solid #ff7a59 !important;
+        font-weight: 700 !important;
+        box-shadow: 0 4px 18px rgba(255, 90, 54, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+        transform: translateY(-1px) !important;
     }
     div[data-baseweb="tab-highlight"] {
         display: none !important;
@@ -495,7 +505,22 @@ if st.session_state.vectorstore is None and st.session_state.cv_data:
     with st.spinner("Mengindeks CV ke dalam Vector Database (FAISS)..."):
         st.session_state.vectorstore = build_rag_index(st.session_state.cv_data["full_text"], api_key)
 
-# ── Tabs Utama ──────────────────────────────────────────────────────────────
+# ── Navigasi Mode Fitur ──────────────────────────────────────────────────────
+st.markdown(
+    """<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.6rem; margin-bottom: 0.55rem; padding: 0 4px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; background: rgba(255, 90, 54, 0.2); border-radius: 6px; font-size: 0.85rem;">👆</span>
+            <span style="font-size: 0.88rem; font-weight: 700; letter-spacing: 0.01em; color: #f1f5f9;">
+                PILIH FITUR: <span style="color: #ff7a59; font-weight: 500; font-size: 0.82rem;">(Klik salah satu tombol tab di bawah untuk berganti mode)</span>
+            </span>
+        </div>
+        <span style="font-size: 0.76rem; color: #94a3b8; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); padding: 3px 10px; border-radius: 20px; font-weight: 500;">
+            ⚡ 4 Mode Tersedia
+        </span>
+    </div>""",
+    unsafe_allow_html=True,
+)
+
 tab_audit, tab_chat, tab_jd, tab_preview = st.tabs([
     "💥 Instant Roasting & Audit",
     "💬 Arena Baku Hantam (Chat & RAG)",

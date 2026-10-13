@@ -575,52 +575,57 @@ with tab_chat:
         unsafe_allow_html=True,
     )
 
-    # Tampilkan percakapan yang tersimpan
-    for idx, msg in enumerate(st.session_state.messages):
-        avatar = "🧑‍💻" if msg["role"] == "user" else bot_avatar
-        with st.chat_message(msg["role"], avatar=avatar):
-            st.markdown(msg["content"])
-            
-            # Jika ada kutipan referensi RAG, tampilkan dalam expander
-            if msg.get("rag_context"):
-                with st.expander("🔍 Bukti Dokumen yang Ditemukan Vektor RAG (Chroma/FAISS):"):
-                    st.caption(msg["rag_context"])
+    # Wadah percakapan agar selalu berada DI ATAS kotak input
+    chat_container = st.container()
 
-    # Kotak Input Chat
+    # Kotak Input Chat berada di bawah wadah percakapan
     chat_prompt = st.chat_input("Ketik pembelaanmu, pertanyaan interview, atau minta saran perbaikan...")
+
+    # Tampilkan percakapan yang tersimpan di dalam container
+    with chat_container:
+        for idx, msg in enumerate(st.session_state.messages):
+            avatar = "🧑‍💻" if msg["role"] == "user" else bot_avatar
+            with st.chat_message(msg["role"], avatar=avatar):
+                st.markdown(msg["content"])
+                
+                # Jika ada kutipan referensi RAG, tampilkan dalam expander
+                if msg.get("rag_context"):
+                    with st.expander("🔍 Bukti Dokumen yang Ditemukan Vektor RAG (FAISS):"):
+                        st.caption(msg["rag_context"])
 
     if chat_prompt:
         # 1. Simpan pesan user
         st.session_state.messages.append({"role": "user", "content": chat_prompt})
-        
-        # 2. Tampilkan pesan user
-        with st.chat_message("user", avatar="🧑‍💻"):
-            st.markdown(chat_prompt)
 
-        # 3. Retrieval RAG
+        # 2. Retrieval RAG
         rag_context_text = ""
         if st.session_state.vectorstore:
             retrieval_res = retrieve_relevant_context(st.session_state.vectorstore, chat_prompt, k=3)
             rag_context_text = retrieval_res["context_text"]
 
-        # 4. Generate Response dari Gemini (Streaming Real-time)
-        with st.chat_message("assistant", avatar=bot_avatar):
-            status_box = st.empty()
-            status_box.markdown(f"*{persona_options[selected_persona_key]} sedang menyusun balasan...* ✍️")
-            stream_gen = generate_chat_turn_stream(
-                messages=st.session_state.messages,
-                rag_context=rag_context_text,
-                cv_full_text=st.session_state.cv_data["full_text"],
-                persona_key=selected_persona_key,
-                spicy_level=spicy_level,
-                api_key=api_key,
-                model_name=selected_model,
-            )
-            response_text = st.write_stream(stream_with_status_clear(stream_gen, status_box))
-            
-            if rag_context_text:
-                with st.expander("🔍 Bukti Dokumen yang Ditemukan Vektor RAG (Chroma/FAISS):"):
-                    st.caption(rag_context_text)
+        # 3. Tampilkan pesan user baru dan respons bot DI DALAM chat_container (di atas input)
+        with chat_container:
+            with st.chat_message("user", avatar="🧑‍💻"):
+                st.markdown(chat_prompt)
+
+            # 4. Generate Response dari Gemini (Streaming Real-time)
+            with st.chat_message("assistant", avatar=bot_avatar):
+                status_box = st.empty()
+                status_box.markdown(f"*{persona_options[selected_persona_key]} sedang menyusun balasan...* ✍️")
+                stream_gen = generate_chat_turn_stream(
+                    messages=st.session_state.messages,
+                    rag_context=rag_context_text,
+                    cv_full_text=st.session_state.cv_data["full_text"],
+                    persona_key=selected_persona_key,
+                    spicy_level=spicy_level,
+                    api_key=api_key,
+                    model_name=selected_model,
+                )
+                response_text = st.write_stream(stream_with_status_clear(stream_gen, status_box))
+                
+                if rag_context_text:
+                    with st.expander("🔍 Bukti Dokumen yang Ditemukan Vektor RAG (FAISS):"):
+                        st.caption(rag_context_text)
 
         # 5. Simpan pesan bot ke session state
         st.session_state.messages.append({

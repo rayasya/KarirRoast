@@ -2,7 +2,13 @@ import re
 from typing import List, Dict, Any, Optional, Generator, Tuple
 from google import genai
 from google.genai import types
-from core.personas import PERSONA_PROMPTS, SPICY_LEVELS, INSTANT_AUDIT_PROMPT, RAG_CHAT_PROMPT_TEMPLATE
+from core.personas import (
+    PERSONA_PROMPTS,
+    SPICY_LEVELS,
+    INSTANT_AUDIT_PROMPT,
+    RAG_CHAT_PROMPT_TEMPLATE,
+    JOB_MATCH_PROMPT_TEMPLATE,
+)
 
 def get_client(api_key: str) -> genai.Client:
     return genai.Client(api_key=api_key)
@@ -205,24 +211,29 @@ def generate_job_match_stream(
     model_name: str = "gemini-3.5-flash"
 ) -> Generator[str, None, None]:
     client = get_client(api_key)
-    system_instruction = get_system_instruction(persona_key, spicy_level)
+    base_instruction = get_system_instruction(persona_key, spicy_level)
 
-    prompt = f"""Tolong bandingkan profil CV kandidat ini dengan Lowongan Kerja (Job Description) berikut:
+    # Sesuaikan instruksi jika persona adalah mock_interviewer agar tidak mensimulasikan tanya-jawab interview
+    if persona_key == "mock_interviewer":
+        system_instruction = (
+            "Kamu adalah 'VP of Engineering' yang sangat kritis dan sedang menyusun lembar audit teknis "
+            "evaluasi berkas lamaran kandidat terhadap kualifikasi lowongan kerja.\n"
+            "Tuliskan laporan evaluasi tertulis satu arah secara dingin, objektif, dan tajam.\n"
+            "JANGAN melakukan simulasi interview tatap muka dan DILARANG mengajukan pertanyaan kepada kandidat."
+        )
+    else:
+        system_instruction = (
+            f"{base_instruction}\n\n"
+            "PANDUAN LAPORAN EVALUASI JOB MATCHING:\n"
+            "- Ini adalah dokumen laporan evaluasi screening tertulis satu arah (bukan sesi wawancara atau chat interaktif).\n"
+            "- DILARANG mengajukan pertanyaan apapun kepada kandidat di akhir respons (karena tidak ada fitur chat/balas di halaman ini).\n"
+            "- Berikan kesimpulan dan vonis akhir yang tuntas dan definitif."
+        )
 
-<JOB_DESCRIPTION>
-{job_description[:4000]}
-</JOB_DESCRIPTION>
-
-<CV_KANDIDAT>
-{cv_text[:8000]}
-</CV_KANDIDAT>
-
-Format Jawaban yang Diharapkan (Markdown):
-1. 🎯 **Peluang Lolos Screening:** (Persentase % & Vonis Singkat)
-2. 🚨 **Kelemahan & Skill Gap Terbesar:** (Apa yang diminta lowongan tapi tidak ada di CV)
-3. 🔥 **Komentar Pedas:** (Roasting realistis tentang seberapa delusional atau cocoknya kandidat melamar posisi ini)
-4. 🛠️ **Strategi Menambal Kekurangan:** (3 langkah taktis agar lamaran ini tidak langsung masuk folder Spam)
-"""
+    prompt = JOB_MATCH_PROMPT_TEMPLATE.format(
+        job_description=job_description[:4000],
+        cv_text=cv_text[:8000],
+    )
 
     config = types.GenerateContentConfig(
         system_instruction=system_instruction,

@@ -113,3 +113,25 @@ Instruksi Tambahan:
 - Jika user menyangkal atau mendebat, gunakan bukti nyata dari kutipan CV di atas untuk mematahkan argumen user secara cerdas dan lucu.
 - Jika user meminta contoh perbaikan, berikan contoh konkret teks perbaikan.
 """
+
+JOB_MATCH_PROMPT_TEMPLATE = """Tolong bandingkan profil CV kandidat ini dengan Lowongan Kerja (Job Description) berikut secara tuntas:
+
+<JOB_DESCRIPTION>
+{job_description}
+</JOB_DESCRIPTION>
+
+<CV_KANDIDAT>
+{cv_text}
+</CV_KANDIDAT>
+
+Format Laporan Evaluasi (Markdown):
+1. 🎯 **Peluang Lolos Screening:** (Persentase % & Vonis Singkat: Lolos / Masuk Blacklist / Butuh Keajaiban)
+2. 🚨 **Analisis Skill Gap & Ketidakcocokan Terbesar:** (Skill atau pengalaman yang diminta lowongan tapi tidak ada di CV)
+3. 🔥 **Komentar & Evaluasi Realistis:** (Analisis tajam sesuai gayamu tentang seberapa realistis atau nekatnya kandidat melamar posisi ini)
+4. 🛠️ **Strategi Menambal Kekurangan:** (3 langkah taktis konkret agar lamaran ini tidak langsung masuk folder Spam)
+5. ⚖️ **Kesimpulan Akhir & Vonis Screening:** (Rangkuman keputusan final apakah profil ini layak dilanjutkan ke tahap berikutnya atau ditolak mentah-mentah)
+
+PANDUAN PENTING:
+- Ini adalah dokumen laporan evaluasi satu arah, BUKAN sesi wawancara atau percakapan interaktif.
+- DILARANG mengajukan pertanyaan apapun kepada kandidat di akhir respons (karena tidak ada kolom chat/input untuk membalas di halaman ini). Berikan kesimpulan dan vonis final!
+"""

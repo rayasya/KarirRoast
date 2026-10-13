@@ -1,0 +1,591 @@
+import streamlit as st
+import os
+from dotenv import load_dotenv
+
+from core.pdf_loader import extract_pdf_data
+from core.rag_engine import build_rag_index, retrieve_relevant_context
+from core.personas import PERSONA_PROMPTS, SPICY_LEVELS
+from core.gemini_service import (
+    generate_instant_audit_stream,
+    generate_chat_turn_stream,
+    generate_job_match_stream,
+)
+
+# ── Konfigurasi Halaman Streamlit ───────────────────────────────────────────
+st.set_page_config(
+    page_title="KarirRoast AI — CV Roaster & Career Wingman",
+    page_icon="🔥",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+# ── Custom CSS untuk Tampilan Modern & Menarik ──────────────────────────────
+st.markdown(
+    """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+    /* Font Family & Global Smoothing */
+    html, body, [class*="css"], .stMarkdown, .stText, [data-testid="stAppViewContainer"], .stButton, .stTextInput, .stSelectbox {
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Container Spacing */
+    .block-container {
+        padding-top: 1.8rem !important;
+        padding-bottom: 3rem !important;
+        max-width: 1180px !important;
+    }
+
+    /* Hero Banner: Modern, Simple, Clean SaaS Card */
+    .hero-banner {
+        position: relative;
+        background: linear-gradient(145deg, #131826 0%, #0d111a 100%);
+        padding: 2.2rem 2.4rem;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        margin-bottom: 1.6rem;
+        overflow: hidden;
+    }
+    .hero-banner::after {
+        content: '';
+        position: absolute;
+        top: -40px;
+        right: -40px;
+        width: 220px;
+        height: 220px;
+        background: radial-gradient(circle, rgba(255, 90, 54, 0.16) 0%, transparent 70%);
+        pointer-events: none;
+        filter: blur(20px);
+    }
+    .hero-title {
+        font-size: 2.3rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        background: linear-gradient(90deg, #ffffff 40%, #ff7a59 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.4rem;
+    }
+    .hero-subtitle {
+        font-size: 0.98rem;
+        color: #94a3b8;
+        font-weight: 400;
+        line-height: 1.6;
+        max-width: 780px;
+        margin-bottom: 1rem;
+    }
+
+    /* Badge Pills */
+    .badge-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+    }
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.35rem 0.85rem;
+        border-radius: 9999px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        backdrop-filter: blur(6px);
+    }
+    .badge:hover {
+        transform: translateY(-1px);
+    }
+    .badge-fire {
+        background: rgba(255, 90, 54, 0.12);
+        color: #ff8264;
+        border: 1px solid rgba(255, 90, 54, 0.28);
+    }
+    .badge-rag {
+        background: rgba(56, 189, 248, 0.1);
+        color: #38bdf8;
+        border: 1px solid rgba(56, 189, 248, 0.25);
+    }
+    .badge-persona {
+        background: rgba(168, 85, 247, 0.1);
+        color: #c084fc;
+        border: 1px solid rgba(168, 85, 247, 0.25);
+    }
+
+    /* Modern Segmented Tabs */
+    div[data-baseweb="tab-list"] {
+        gap: 0.4rem !important;
+        background-color: rgba(19, 24, 38, 0.7) !important;
+        padding: 0.35rem !important;
+        border-radius: 14px !important;
+        border: 1px solid rgba(255, 255, 255, 0.06) !important;
+        margin-bottom: 1.5rem !important;
+    }
+    button[data-baseweb="tab"] {
+        border-radius: 10px !important;
+        padding: 0.55rem 1.15rem !important;
+        font-size: 0.9rem !important;
+        font-weight: 500 !important;
+        color: #94a3b8 !important;
+        background: transparent !important;
+        border: 1px solid transparent !important;
+        transition: all 0.2s ease-in-out !important;
+    }
+    button[data-baseweb="tab"]:hover {
+        color: #ffffff !important;
+        background-color: rgba(255, 255, 255, 0.05) !important;
+    }
+    button[data-baseweb="tab"][aria-selected="true"] {
+        color: #ffffff !important;
+        background-color: rgba(255, 90, 54, 0.15) !important;
+        border: 1px solid rgba(255, 90, 54, 0.35) !important;
+        font-weight: 600 !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+    }
+    div[data-baseweb="tab-highlight"] {
+        display: none !important;
+    }
+
+    /* Buttons: Primary & Secondary Micro-interactions */
+    div.stButton > button[kind="primary"],
+    div.stButton > button[data-testid="baseButton-primary"] {
+        background: linear-gradient(135deg, #ff5a36 0%, #ff7a59 100%) !important;
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: 11px !important;
+        font-weight: 600 !important;
+        padding: 0.55rem 1.25rem !important;
+        box-shadow: 0 4px 14px rgba(255, 90, 54, 0.3) !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    div.stButton > button[kind="primary"]:hover,
+    div.stButton > button[data-testid="baseButton-primary"]:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 20px rgba(255, 90, 54, 0.45) !important;
+    }
+    div.stButton > button[kind="primary"]:active,
+    div.stButton > button[data-testid="baseButton-primary"]:active {
+        transform: translateY(0) scale(0.98) !important;
+    }
+    div.stButton > button[kind="secondary"],
+    div.stButton > button[data-testid="baseButton-secondary"] {
+        background: rgba(255, 255, 255, 0.03) !important;
+        color: #cbd5e1 !important;
+        border: 1px solid rgba(255, 255, 255, 0.09) !important;
+        border-radius: 11px !important;
+        font-weight: 500 !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    div.stButton > button[kind="secondary"]:hover,
+    div.stButton > button[data-testid="baseButton-secondary"]:hover {
+        background: rgba(255, 255, 255, 0.07) !important;
+        border-color: rgba(255, 255, 255, 0.2) !important;
+        color: #ffffff !important;
+        transform: translateY(-1px) !important;
+    }
+
+    /* Chat Message Bubbles */
+    [data-testid="stChatMessage"] {
+        background-color: rgba(19, 24, 38, 0.55) !important;
+        border: 1px solid rgba(255, 255, 255, 0.06) !important;
+        border-radius: 14px !important;
+        padding: 1rem 1.25rem !important;
+        margin-bottom: 0.85rem !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+        transition: border-color 0.2s ease;
+    }
+    [data-testid="stChatMessage"]:hover {
+        border-color: rgba(255, 255, 255, 0.12) !important;
+    }
+    [data-testid="stChatInput"] {
+        border-radius: 14px !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        background-color: rgba(15, 19, 30, 0.95) !important;
+        backdrop-filter: blur(12px) !important;
+    }
+    [data-testid="stChatInput"]:focus-within {
+        border-color: rgba(255, 90, 54, 0.6) !important;
+        box-shadow: 0 0 0 3px rgba(255, 90, 54, 0.15) !important;
+    }
+
+    /* Expanders & Cards */
+    [data-testid="stExpander"] {
+        border: 1px solid rgba(255, 255, 255, 0.07) !important;
+        border-radius: 12px !important;
+        background: rgba(19, 24, 38, 0.35) !important;
+        overflow: hidden;
+        margin-bottom: 0.85rem;
+    }
+    [data-testid="stExpander"] summary {
+        font-weight: 500 !important;
+        color: #e2e8f0 !important;
+        padding: 0.8rem 1rem !important;
+        transition: background-color 0.2s ease;
+    }
+    [data-testid="stExpander"] summary:hover {
+        background-color: rgba(255, 255, 255, 0.03) !important;
+    }
+
+    /* Form Inputs */
+    textarea, input[type="text"], input[type="password"] {
+        border-radius: 10px !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        background-color: rgba(19, 24, 38, 0.5) !important;
+        transition: all 0.2s ease !important;
+    }
+    textarea:focus, input[type="text"]:focus, input[type="password"]:focus {
+        border-color: #ff7a59 !important;
+        box-shadow: 0 0 0 2px rgba(255, 90, 54, 0.2) !important;
+    }
+
+    /* Alerts */
+    [data-testid="stAlert"] {
+        border-radius: 12px !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+
+    /* Custom Modern Slim Scrollbars */
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.25);
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# ── Inisialisasi Session State ──────────────────────────────────────────────
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+if "cv_data" not in st.session_state:
+    st.session_state.cv_data = None
+if "vectorstore" not in st.session_state:
+    st.session_state.vectorstore = None
+if "audit_result" not in st.session_state:
+    st.session_state.audit_result = None
+if "active_file_name" not in st.session_state:
+    st.session_state.active_file_name = None
+if "job_match_result" not in st.session_state:
+    st.session_state.job_match_result = None
+
+# ── Sidebar ─────────────────────────────────────────────────────────────────
+with st.sidebar:
+    st.markdown("### 🔥 **Pengaturan KarirRoast**")
+    
+    # 1. API Key Input
+    env_key = os.getenv("GOOGLE_API_KEY", "")
+    api_key = st.text_input(
+        "Google AI Studio API Key",
+        value=env_key,
+        type="password",
+        help="Dapatkan API Key gratis di Google AI Studio (aistudio.google.com)",
+    )
+    if not api_key:
+        st.warning("⚠️ Masukkan Google API Key untuk mengaktifkan AI.", icon="🔑")
+
+    st.divider()
+
+    # 2. Pilihan Dokumen CV
+    st.markdown("#### 📄 **Pilih Dokumen CV**")
+    cv_source_mode = st.radio(
+        "Sumber CV:",
+        ["Gunakan Contoh CV (Rayasya CV)", "Upload PDF Sendiri"],
+        index=0,
+    )
+
+    pdf_file_to_process = None
+    target_name = None
+
+    if cv_source_mode == "Gunakan Contoh CV (Rayasya CV)":
+        sample_path = "sample_cv.pdf"
+        if os.path.exists(sample_path):
+            target_name = "sample_cv.pdf"
+            pdf_file_to_process = sample_path
+        else:
+            st.error("File sample_cv.pdf tidak ditemukan di direktori proyek.")
+    else:
+        uploaded_file = st.file_uploader("Upload CV (Format PDF)", type=["pdf"])
+        if uploaded_file is not None:
+            target_name = uploaded_file.name
+            pdf_file_to_process = uploaded_file
+
+    # Load / reload dokumen jika ada file baru
+    if pdf_file_to_process is not None and (st.session_state.active_file_name != target_name):
+        with st.spinner("Membaca dan memproses PDF CV..."):
+            try:
+                extracted = extract_pdf_data(pdf_file_to_process)
+                st.session_state.cv_data = extracted
+                st.session_state.active_file_name = target_name
+                st.session_state.audit_result = None
+                st.session_state.messages = []
+                
+                # Buat RAG Vector Store jika API key tersedia
+                if api_key:
+                    st.session_state.vectorstore = build_rag_index(extracted["full_text"], api_key)
+                else:
+                    st.session_state.vectorstore = None
+                st.success(f"Berhasil memuat: {target_name} ({extracted['total_pages']} hal)")
+            except Exception as e:
+                st.error(f"Gagal memproses PDF: {e}")
+
+    # Indikator CV yang sedang aktif
+    if st.session_state.cv_data:
+        st.info(
+            f"📌 **CV Aktif:** `{st.session_state.active_file_name}`\n\n"
+            f"• Total Halaman: **{st.session_state.cv_data['total_pages']}**\n"
+            f"• Estimasi Kata: **{st.session_state.cv_data['word_count']}** kata\n"
+            f"• Status RAG: {'✅ Siap Indeks' if st.session_state.vectorstore else '⏳ Menunggu API Key'}"
+        )
+
+    st.divider()
+
+    # 3. Persona & Konfigurasi AI
+    st.markdown("#### 🎭 **Pilih Persona AI**")
+    persona_options = {
+        "hrd_savage": "😈 HRD Savage (Roaster & Debat)",
+        "dukun_karir": "🔮 Dukun Primbon Karir",
+        "ats_pro": "👔 Konsultan ATS & Karir Pro",
+        "mock_interviewer": "🥊 Interviewer Muka Tembok",
+    }
+    
+    selected_persona_key = st.selectbox(
+        "Persona AI:",
+        options=list(persona_options.keys()),
+        format_func=lambda k: persona_options[k],
+        index=0,
+    )
+
+    # Tingkat Kepedasan (Khusus HRD Savage)
+    spicy_level = 2
+    if selected_persona_key == "hrd_savage":
+        spicy_level = st.slider(
+            "Tingkat Kepedasan Roasting 🌶️",
+            min_value=1,
+            max_value=3,
+            value=2,
+            help="1: Menyindir Halus, 2: HRD Jaksel Julid, 3: Neraka Jahanam (Tanpa Ampun 🔥)",
+        )
+        st.caption(SPICY_LEVELS[spicy_level])
+
+    # Model LLM
+    selected_model = st.selectbox(
+        "Model Gemini:",
+        options=["gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.0-flash"],
+        index=0,
+    )
+
+    st.divider()
+
+    # 4. Reset Button
+    if st.button("🗑️ Reset Chat & Data", use_container_width=True):
+        st.session_state.messages = []
+        st.session_state.audit_result = None
+        st.session_state.job_match_result = None
+        st.rerun()
+
+# ── Header Banner ───────────────────────────────────────────────────────────
+st.markdown(
+    """
+    <div class="hero-banner">
+        <div class="hero-title">🔥 KarirRoast AI</div>
+        <div class="hero-subtitle">
+            Platform AI Roaster, Simulator Debat HRD, & Career Wingman Berbasis RAG (LangChain + FAISS + Gemini)
+        </div>
+        <div class="badge-container">
+            <span class="badge badge-fire">🔥 Multimodal CV Roaster</span>
+            <span class="badge badge-rag">🧠 LangChain & FAISS RAG</span>
+            <span class="badge badge-persona">🎭 Dynamic Multi-Persona</span>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+# Cek prasyarat sebelum mulai
+if not api_key:
+    st.info("🗝️ **Silakan masukkan Google AI Studio API Key di sidebar sebelah kiri untuk mulai.**", icon="👉")
+    st.stop()
+
+if not st.session_state.cv_data:
+    st.warning("📄 **Silakan pilih atau upload dokumen CV di sidebar untuk melanjutkan.**", icon="⚠️")
+    st.stop()
+
+# Buat ulang RAG index jika belum ada tapi API Key sudah tersedia
+if st.session_state.vectorstore is None and st.session_state.cv_data:
+    with st.spinner("Mengindeks CV ke dalam Vector Database (FAISS)..."):
+        st.session_state.vectorstore = build_rag_index(st.session_state.cv_data["full_text"], api_key)
+
+# ── Tabs Utama ──────────────────────────────────────────────────────────────
+tab_audit, tab_chat, tab_jd, tab_preview = st.tabs([
+    "💥 Instant Roasting & Audit",
+    "💬 Arena Baku Hantam (Chat & RAG)",
+    "🎯 Job Matcher & Simulator",
+    "📄 Preview Teks CV",
+])
+
+# ── TAB 1: INSTANT ROASTING & AUDIT ─────────────────────────────────────────
+with tab_audit:
+    col_desc, col_btn = st.columns([3, 1])
+    with col_desc:
+        current_persona_info = PERSONA_PROMPTS[selected_persona_key]
+        st.markdown(f"**Persona Aktif:** `{current_persona_info['name']}` — *{current_persona_info['tagline']}*")
+    with col_btn:
+        roast_button = st.button("🔥 Roast CV Sekarang!", use_container_width=True, type="primary")
+
+    if roast_button:
+        st.markdown("### 📊 Hasil Evaluasi & Roasting:")
+        stream_gen = generate_instant_audit_stream(
+            cv_text=st.session_state.cv_data["full_text"],
+            persona_key=selected_persona_key,
+            spicy_level=spicy_level,
+            api_key=api_key,
+            model_name=selected_model,
+        )
+        st.session_state.audit_result = st.write_stream(stream_gen)
+    elif st.session_state.audit_result:
+        st.markdown("### 📊 Hasil Evaluasi & Roasting:")
+        st.markdown(st.session_state.audit_result)
+        
+        st.divider()
+        st.markdown("##### 🚀 Aksi Cepat ke Arena Chat:")
+        c1, c2, c3 = st.columns(3)
+        if c1.button("🥊 Debat: 'Proyek saya nyata dan berdampak!'"):
+            st.session_state.messages.append({
+                "role": "user",
+                "content": "Enak aja dibilang klise! Pengalaman dan proyek yang ada di CV saya itu nyata dan punya dampak terukur. Coba tunjukkan bagian mana yang menurut kamu paling lemah?"
+            })
+            st.rerun()
+        if c2.button("✍️ Tough Love: 'Tolong benerin bullet point saya'"):
+            st.session_state.messages.append({
+                "role": "user",
+                "content": "Oke, saya akui masih ada kekurangan. Tolong berikan contoh perbaikan konkret (sebelum vs sesudah) untuk pengalaman kerja di CV saya menggunakan metode STAR."
+            })
+            st.rerun()
+        if c3.button("🎯 Cek Kesiapan: 'Posisi apa yang paling cocok?'"):
+            st.session_state.messages.append({
+                "role": "user",
+                "content": "Berdasarkan keahlian riil di CV saya, posisi apa di industri yang paling realistis untuk saya lamar saat ini tanpa bikin recruiter tertawa?"
+            })
+            st.rerun()
+    else:
+        st.info("Klik tombol **'🔥 Roast CV Sekarang!'** di atas untuk mendapatkan evaluasi awal dan roasting tajam!")
+
+# ── TAB 2: ARENA BAKU HANTAM (CHAT & RAG) ───────────────────────────────────
+with tab_chat:
+    persona_avatars = {
+        "hrd_savage": "😈",
+        "dukun_karir": "🔮",
+        "ats_pro": "👔",
+        "mock_interviewer": "🥊",
+    }
+    bot_avatar = persona_avatars.get(selected_persona_key, "🤖")
+
+    st.markdown(
+        f"**Mode Chat:** Bertanya, membela diri, atau simulasi interview dengan **{persona_options[selected_persona_key]}**.<br>"
+        f"<small style='color: #888;'>Setiap jawaban bot didukung oleh <b>FAISS RAG Retriever</b> yang mencari bukti langsung dari dokumen CV kamu.</small>",
+        unsafe_allow_html=True,
+    )
+
+    # Tampilkan percakapan yang tersimpan
+    for idx, msg in enumerate(st.session_state.messages):
+        avatar = "🧑‍💻" if msg["role"] == "user" else bot_avatar
+        with st.chat_message(msg["role"], avatar=avatar):
+            st.markdown(msg["content"])
+            
+            # Jika ada kutipan referensi RAG, tampilkan dalam expander
+            if msg.get("rag_context"):
+                with st.expander("🔍 Bukti Dokumen yang Ditemukan Vektor RAG (Chroma/FAISS):"):
+                    st.caption(msg["rag_context"])
+
+    # Kotak Input Chat
+    chat_prompt = st.chat_input("Ketik pembelaanmu, pertanyaan interview, atau minta saran perbaikan...")
+
+    if chat_prompt:
+        # 1. Simpan pesan user
+        st.session_state.messages.append({"role": "user", "content": chat_prompt})
+        
+        # 2. Tampilkan pesan user
+        with st.chat_message("user", avatar="🧑‍💻"):
+            st.markdown(chat_prompt)
+
+        # 3. Retrieval RAG
+        rag_context_text = ""
+        if st.session_state.vectorstore:
+            retrieval_res = retrieve_relevant_context(st.session_state.vectorstore, chat_prompt, k=3)
+            rag_context_text = retrieval_res["context_text"]
+
+        # 4. Generate Response dari Gemini (Streaming Real-time)
+        with st.chat_message("assistant", avatar=bot_avatar):
+            stream_gen = generate_chat_turn_stream(
+                messages=st.session_state.messages,
+                rag_context=rag_context_text,
+                cv_full_text=st.session_state.cv_data["full_text"],
+                persona_key=selected_persona_key,
+                spicy_level=spicy_level,
+                api_key=api_key,
+                model_name=selected_model,
+            )
+            response_text = st.write_stream(stream_gen)
+            
+            if rag_context_text:
+                with st.expander("🔍 Bukti Dokumen yang Ditemukan Vektor RAG (Chroma/FAISS):"):
+                    st.caption(rag_context_text)
+
+        # 5. Simpan pesan bot ke session state
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": response_text,
+            "rag_context": rag_context_text if rag_context_text else None,
+        })
+
+# ── TAB 3: JOB DESCRIPTION MATCHER ──────────────────────────────────────────
+with tab_jd:
+    st.markdown("### 🎯 **Pencocokan Lowongan Kerja (Job Description Matcher)**")
+    st.caption("Paste deskripsi pekerjaan / kualifikasi lowongan yang ingin kamu lamar. AI akan mencocokkan kualifikasi dengan isi CV kamu secara realistis.")
+
+    jd_input = st.text_area(
+        "Kualifikasi / Job Description Lowongan Kerja:",
+        placeholder="Contoh:\n- Minimal 2 tahun pengalaman dengan Laravel & Flutter\n- Paham arsitektur microservices dan Docker\n- Memiliki portofolio aplikasi mobile yang sudah rilis di PlayStore/AppStore...",
+        height=180,
+    )
+
+    if st.button("🚀 Uji Kecocokan CV dengan Lowongan", type="primary"):
+        if not jd_input.strip():
+            st.warning("Silakan masukkan teks Job Description terlebih dahulu.")
+        else:
+            st.markdown("### 📋 Hasil Analisis Kecocokan:")
+            stream_gen = generate_job_match_stream(
+                cv_text=st.session_state.cv_data["full_text"],
+                job_description=jd_input,
+                persona_key=selected_persona_key,
+                spicy_level=spicy_level,
+                api_key=api_key,
+                model_name=selected_model,
+            )
+            st.session_state.job_match_result = st.write_stream(stream_gen)
+    elif st.session_state.job_match_result:
+        st.markdown("### 📋 Hasil Analisis Kecocokan:")
+        st.markdown(st.session_state.job_match_result)
+
+# ── TAB 4: PREVIEW TEKS CV ──────────────────────────────────────────────────
+with tab_preview:
+    st.markdown("### 📄 **Ekstraksi Teks Lengkap dari Dokumen CV**")
+    st.caption(f"File: **{st.session_state.active_file_name}** | Total Karakter: {st.session_state.cv_data['char_count']}")
+
+    for idx, page_txt in enumerate(st.session_state.cv_data["pages"]):
+        with st.expander(f"📑 Halaman {idx + 1}", expanded=(idx == 0)):
+            st.text(page_txt if page_txt else "(Halaman kosong atau hanya berisi gambar tanpa teks)")

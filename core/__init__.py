@@ -1,0 +1,1 @@
+# KarirRoast AI Core Package

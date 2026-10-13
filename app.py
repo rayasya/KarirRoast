@@ -24,6 +24,23 @@ def fetch_gemini_models_data(key: str) -> dict:
         "error_msg": error_msg,
     }
 
+def stream_with_status_clear(gen, status_box):
+    """
+    Menampilkan placeholder status loading sampai chunk pertama diterima dari LLM,
+    lalu secara mulus membersihkan placeholder agar st.write_stream langsung
+    menampilkan teks secara realtime token-by-token.
+    """
+    has_cleared = False
+    try:
+        for chunk in gen:
+            if not has_cleared:
+                status_box.empty()
+                has_cleared = True
+            yield chunk
+    finally:
+        if not has_cleared:
+            status_box.empty()
+
 # ── Konfigurasi Halaman Streamlit ───────────────────────────────────────────
 st.set_page_config(
     page_title="KarirRoast AI — CV Roaster & Career Wingman",
@@ -329,7 +346,9 @@ with st.sidebar:
 
     # Tentukan index default model pilihan
     default_idx = 0
-    if "gemini-2.5-flash" in model_options:
+    if "gemini-3.5-flash" in model_options:
+        default_idx = model_options.index("gemini-3.5-flash")
+    elif "gemini-2.5-flash" in model_options:
         default_idx = model_options.index("gemini-2.5-flash")
     elif "gemini-2.0-flash" in model_options:
         default_idx = model_options.index("gemini-2.0-flash")
@@ -350,12 +369,15 @@ with st.sidebar:
     else:
         if error_msg:
             st.error(f"❌ {error_msg}")
-            # Pengecekan format khas Google AI Studio key
-            if not api_key.startswith("AIzaSy"):
-                st.warning("⚠️ **Format key tidak biasa:** API Key Google AI Studio umumnya berformat diawali `AIzaSy...` (39 karakter). Pastikan yang Anda salin bukan OAuth token atau Client Secret.", icon="💡")
-            else:
-                st.info("⏳ **Tips:** Jika key ini baru saja Anda buat di Google AI Studio, tunggu sekitar 30–60 detik agar server Google selesai melakukan propagasi.", icon="💡")
+            st.info("⏳ **Tips:** Jika key ini baru saja Anda buat di Google AI Studio, tunggu sekitar 30–60 detik agar server Google selesai melakukan propagasi secara global.", icon="💡")
         st.caption("ℹ️ *Menggunakan preset model default.*")
+
+    # Tombol Reset Chat & Data tepat di bawah pilihan model
+    if st.button("🗑️ Reset Chat & Data", use_container_width=True):
+        st.session_state.messages = []
+        st.session_state.audit_result = None
+        st.session_state.job_match_result = None
+        st.rerun()
 
     st.divider()
 
@@ -441,15 +463,6 @@ with st.sidebar:
         )
         st.caption(SPICY_LEVELS[spicy_level])
 
-    st.divider()
-
-    # 4. Reset Button
-    if st.button("🗑️ Reset Chat & Data", use_container_width=True):
-        st.session_state.messages = []
-        st.session_state.audit_result = None
-        st.session_state.job_match_result = None
-        st.rerun()
-
 # ── Header Banner ───────────────────────────────────────────────────────────
 st.markdown(
     """
@@ -497,10 +510,18 @@ with tab_audit:
         current_persona_info = PERSONA_PROMPTS[selected_persona_key]
         st.markdown(f"**Persona Aktif:** `{current_persona_info['name']}` — *{current_persona_info['tagline']}*")
     with col_btn:
-        roast_button = st.button("🔥 Roast CV Sekarang!", use_container_width=True, type="primary")
+        btn_placeholder = st.empty()
+        roast_button = btn_placeholder.button("🔥 Roast CV Sekarang!", use_container_width=True, type="primary")
 
     if roast_button:
+        # Langsung ubah tombol jadi disabled agar tidak bisa diklik dua kali
+        btn_placeholder.button("⏳ Sedang Meroasting...", disabled=True, use_container_width=True)
         st.markdown("### 📊 Hasil Evaluasi & Roasting:")
+        status_box = st.empty()
+        status_box.info(
+            f"🔥 **{current_persona_info['name']} sedang menganalisis dokumen CV & meracik evaluasi...** *(Model: `{selected_model}`)*",
+            icon="⏳"
+        )
         stream_gen = generate_instant_audit_stream(
             cv_text=st.session_state.cv_data["full_text"],
             persona_key=selected_persona_key,
@@ -508,7 +529,8 @@ with tab_audit:
             api_key=api_key,
             model_name=selected_model,
         )
-        st.session_state.audit_result = st.write_stream(stream_gen)
+        st.session_state.audit_result = st.write_stream(stream_with_status_clear(stream_gen, status_box))
+        btn_placeholder.button("🔄 Roast Ulang CV", use_container_width=True)
     elif st.session_state.audit_result:
         st.markdown("### 📊 Hasil Evaluasi & Roasting:")
         st.markdown(st.session_state.audit_result)
@@ -583,6 +605,8 @@ with tab_chat:
 
         # 4. Generate Response dari Gemini (Streaming Real-time)
         with st.chat_message("assistant", avatar=bot_avatar):
+            status_box = st.empty()
+            status_box.markdown(f"*{persona_options[selected_persona_key]} sedang menyusun balasan...* ✍️")
             stream_gen = generate_chat_turn_stream(
                 messages=st.session_state.messages,
                 rag_context=rag_context_text,
@@ -592,7 +616,7 @@ with tab_chat:
                 api_key=api_key,
                 model_name=selected_model,
             )
-            response_text = st.write_stream(stream_gen)
+            response_text = st.write_stream(stream_with_status_clear(stream_gen, status_box))
             
             if rag_context_text:
                 with st.expander("🔍 Bukti Dokumen yang Ditemukan Vektor RAG (Chroma/FAISS):"):
@@ -616,11 +640,20 @@ with tab_jd:
         height=180,
     )
 
-    if st.button("🚀 Uji Kecocokan CV dengan Lowongan", type="primary"):
+    btn_jd_placeholder = st.empty()
+    jd_button = btn_jd_placeholder.button("🚀 Uji Kecocokan CV dengan Lowongan", type="primary")
+
+    if jd_button:
         if not jd_input.strip():
             st.warning("Silakan masukkan teks Job Description terlebih dahulu.")
         else:
+            btn_jd_placeholder.button("⏳ Sedang Menganalisis Kecocokan...", disabled=True)
             st.markdown("### 📋 Hasil Analisis Kecocokan:")
+            status_box = st.empty()
+            status_box.info(
+                f"🎯 **Sedang menganalisis kecocokan profil CV dengan kualifikasi lowongan...** *(Model: `{selected_model}`)*",
+                icon="⏳"
+            )
             stream_gen = generate_job_match_stream(
                 cv_text=st.session_state.cv_data["full_text"],
                 job_description=jd_input,
@@ -629,7 +662,8 @@ with tab_jd:
                 api_key=api_key,
                 model_name=selected_model,
             )
-            st.session_state.job_match_result = st.write_stream(stream_gen)
+            st.session_state.job_match_result = st.write_stream(stream_with_status_clear(stream_gen, status_box))
+            btn_jd_placeholder.button("🔄 Uji Ulang Lowongan Lain", type="primary")
     elif st.session_state.job_match_result:
         st.markdown("### 📋 Hasil Analisis Kecocokan:")
         st.markdown(st.session_state.job_match_result)

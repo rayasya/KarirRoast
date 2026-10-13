@@ -55,7 +55,7 @@ def build_rag_index(cv_text: str, api_key: str) -> CVVectorStore:
 
     vectorstore = None
     clean_key = api_key.strip().strip('"').strip("'") if api_key else ""
-    embedding_models = ["models/text-embedding-004", "models/embedding-001"]
+    embedding_models = ["text-embedding-004", "embedding-001"]
 
     for model_name in embedding_models:
         try:

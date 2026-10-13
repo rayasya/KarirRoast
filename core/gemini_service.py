@@ -1,3 +1,4 @@
+import re
 from typing import List, Dict, Any, Optional, Generator, Tuple
 from google import genai
 from google.genai import types
@@ -47,12 +48,8 @@ def get_available_models(api_key: str) -> Tuple[List[str], bool, Optional[str]]:
     Mengembalikan tuple (daftar_model, is_dynamic_success, error_message).
     """
     fallback_models = [
+        "gemini-3.5-flash",
         "gemini-2.5-flash",
-        "gemini-2.0-flash",
-        "gemini-1.5-flash",
-        "gemini-1.5-pro",
-        "gemini-2.5-pro",
-        "gemini-2.0-flash-lite",
     ]
     clean_key = api_key.strip().strip('"').strip("'") if api_key else ""
     if not clean_key:
@@ -71,21 +68,23 @@ def get_available_models(api_key: str) -> Tuple[List[str], bool, Optional[str]]:
                 fetched_models.append(clean_name)
 
         if fetched_models:
-            priority_order = [
-                "gemini-2.5-flash",
-                "gemini-2.0-flash",
-                "gemini-1.5-flash",
-                "gemini-1.5-pro",
-                "gemini-2.5-pro",
-                "gemini-2.0-flash-lite",
-                "gemini-1.0-pro",
-            ]
             unique_models = list(dict.fromkeys(fetched_models))
 
+            # Mengutamakan varian Flash terlebih dahulu (paling cepat & efisien)
             def sort_key(item: str):
-                if item in priority_order:
-                    return (0, priority_order.index(item))
-                return (1, item)
+                match = re.search(r"gemini-(\d+(?:\.\d+)?)", item.lower())
+                version = float(match.group(1)) if match else 0.0
+
+                tier = 2
+                if "flash" in item.lower() and "lite" not in item.lower():
+                    tier = 0
+                elif "pro" in item.lower():
+                    tier = 1
+                elif "lite" in item.lower():
+                    tier = 2
+
+                # -version membuat angka versi yang lebih besar (terbaru) berada di paling atas
+                return (-version, tier, item)
 
             sorted_models = sorted(unique_models, key=sort_key)
             return sorted_models, True, None
@@ -112,7 +111,7 @@ def generate_instant_audit_stream(
     persona_key: str,
     spicy_level: int,
     api_key: str,
-    model_name: str = "gemini-2.5-flash"
+    model_name: str = "gemini-3.5-flash"
 ) -> Generator[str, None, None]:
     client = get_client(api_key)
     system_instruction = get_system_instruction(persona_key, spicy_level)
@@ -151,7 +150,7 @@ def generate_chat_turn_stream(
     persona_key: str,
     spicy_level: int,
     api_key: str,
-    model_name: str = "gemini-2.5-flash"
+    model_name: str = "gemini-3.5-flash"
 ) -> Generator[str, None, None]:
     client = get_client(api_key)
     base_instruction = get_system_instruction(persona_key, spicy_level)
@@ -203,7 +202,7 @@ def generate_job_match_stream(
     persona_key: str,
     spicy_level: int,
     api_key: str,
-    model_name: str = "gemini-2.5-flash"
+    model_name: str = "gemini-3.5-flash"
 ) -> Generator[str, None, None]:
     client = get_client(api_key)
     system_instruction = get_system_instruction(persona_key, spicy_level)
@@ -243,11 +242,11 @@ Format Jawaban yang Diharapkan (Markdown):
         yield f"\n\n⚠️ Terjadi error saat perbandingan: {e}"
 
 # Fallback functions jika ada yang memanggil versi synchronous
-def generate_instant_audit(cv_text, persona_key, spicy_level, api_key, model_name="gemini-2.5-flash") -> str:
+def generate_instant_audit(cv_text, persona_key, spicy_level, api_key, model_name="gemini-3.5-flash") -> str:
     return "".join(generate_instant_audit_stream(cv_text, persona_key, spicy_level, api_key, model_name))
 
-def generate_chat_turn(messages, rag_context, cv_full_text, persona_key, spicy_level, api_key, model_name="gemini-2.5-flash") -> str:
+def generate_chat_turn(messages, rag_context, cv_full_text, persona_key, spicy_level, api_key, model_name="gemini-3.5-flash") -> str:
     return "".join(generate_chat_turn_stream(messages, rag_context, cv_full_text, persona_key, spicy_level, api_key, model_name))
 
-def generate_job_match(cv_text, job_description, persona_key, spicy_level, api_key, model_name="gemini-2.5-flash") -> str:
+def generate_job_match(cv_text, job_description, persona_key, spicy_level, api_key, model_name="gemini-3.5-flash") -> str:
     return "".join(generate_job_match_stream(cv_text, job_description, persona_key, spicy_level, api_key, model_name))

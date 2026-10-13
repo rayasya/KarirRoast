@@ -9,7 +9,20 @@ from core.gemini_service import (
     generate_instant_audit_stream,
     generate_chat_turn_stream,
     generate_job_match_stream,
+    get_available_models,
 )
+
+# Load file .env jika ada
+load_dotenv()
+
+@st.cache_data(show_spinner="Mengambil daftar model Gemini...", ttl=600)
+def fetch_gemini_models_data(key: str) -> dict:
+    models, is_dynamic, error_msg = get_available_models(key)
+    return {
+        "models": models,
+        "is_dynamic": is_dynamic,
+        "error_msg": error_msg,
+    }
 
 # ── Konfigurasi Halaman Streamlit ───────────────────────────────────────────
 st.set_page_config(
@@ -286,16 +299,63 @@ if "job_match_result" not in st.session_state:
 with st.sidebar:
     st.markdown("### 🔥 **Pengaturan KarirRoast**")
     
-    # 1. API Key Input
+    # 1. API Key Input & Pilihan Model Gemini
+    st.markdown("#### 🔑 **Google Gemini API**")
     env_key = os.getenv("GOOGLE_API_KEY", "")
-    api_key = st.text_input(
+    raw_api_key = st.text_input(
         "Google AI Studio API Key",
         value=env_key,
         type="password",
         help="Dapatkan API Key gratis di Google AI Studio (aistudio.google.com)",
     )
+    # Otomatis bersihkan spasi dan petik ekstra
+    api_key = raw_api_key.strip().strip('"').strip("'") if raw_api_key else ""
+    
+    # Link bantuan untuk mendapatkan API Key
+    st.markdown(
+        """<div style="margin-top: -6px; margin-bottom: 12px;">
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: #ff7b54; font-size: 0.83rem; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                🔑 Dapatkan Google API Key Gratis disini ↗
+            </a>
+        </div>""",
+        unsafe_allow_html=True,
+    )
+
+    # Mengambil daftar model secara dinamis dari API Key
+    model_data = fetch_gemini_models_data(api_key)
+    model_options = model_data["models"]
+    is_dynamic = model_data["is_dynamic"]
+    error_msg = model_data["error_msg"]
+
+    # Tentukan index default model pilihan
+    default_idx = 0
+    if "gemini-2.5-flash" in model_options:
+        default_idx = model_options.index("gemini-2.5-flash")
+    elif "gemini-2.0-flash" in model_options:
+        default_idx = model_options.index("gemini-2.0-flash")
+    elif "gemini-1.5-flash" in model_options:
+        default_idx = model_options.index("gemini-1.5-flash")
+
+    selected_model = st.selectbox(
+        "🤖 Model Gemini:",
+        options=model_options,
+        index=default_idx,
+        help="Model Gemini yang digunakan untuk Roasting, Chat, dan Job Match. Terhubung dinamis dengan API Key Anda."
+    )
+
     if not api_key:
         st.warning("⚠️ Masukkan Google API Key untuk mengaktifkan AI.", icon="🔑")
+    elif is_dynamic:
+        st.caption(f"✨ *{len(model_options)} model aktif terdeteksi dari API Key Anda.*")
+    else:
+        if error_msg:
+            st.error(f"❌ {error_msg}")
+            # Pengecekan format khas Google AI Studio key
+            if not api_key.startswith("AIzaSy"):
+                st.warning("⚠️ **Format key tidak biasa:** API Key Google AI Studio umumnya berformat diawali `AIzaSy...` (39 karakter). Pastikan yang Anda salin bukan OAuth token atau Client Secret.", icon="💡")
+            else:
+                st.info("⏳ **Tips:** Jika key ini baru saja Anda buat di Google AI Studio, tunggu sekitar 30–60 detik agar server Google selesai melakukan propagasi.", icon="💡")
+        st.caption("ℹ️ *Menggunakan preset model default.*")
 
     st.divider()
 
@@ -380,13 +440,6 @@ with st.sidebar:
             help="1: Menyindir Halus, 2: HRD Jaksel Julid, 3: Neraka Jahanam (Tanpa Ampun 🔥)",
         )
         st.caption(SPICY_LEVELS[spicy_level])
-
-    # Model LLM
-    selected_model = st.selectbox(
-        "Model Gemini:",
-        options=["gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.0-flash"],
-        index=0,
-    )
 
     st.divider()
 

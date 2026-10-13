@@ -60,7 +60,7 @@ Proyek ini dibangun dengan memadukan teknologi modern LLM, RAG, dan UI interakti
 
 ### Prasyarat:
 - Python 3.10+
-- Google AI Studio API Key (dapat diperoleh gratis di [aistudio.google.com](https://aistudio.google.com))
+- Google AI Studio API Key (dapat diperoleh gratis di [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey))
 
 ### Langkah-langkah:
 1. Clone repository dan masuk ke direktori proyek:
@@ -92,7 +92,7 @@ Proyek ini dibangun dengan memadukan teknologi modern LLM, RAG, dan UI interakti
    streamlit run app.py
    ```
 
-5. Buka tautan lokal yang ditampilkan di terminal (biasanya `http://localhost:8501`), lalu masukkan **Google AI Studio API Key** Anda langsung di sidebar aplikasi.
+5. Buka tautan lokal yang ditampilkan di terminal (biasanya `http://localhost:8501`), lalu masukkan **Google AI Studio API Key** Anda di sidebar aplikasi. Model Gemini akan otomatis dimuat secara dinamis dari API Key Anda sehingga Anda dapat memilih model yang diinginkan (`gemini-2.5-flash`, `gemini-2.0-flash`, `gemini-1.5-flash`, dll.).
 
 ---
 

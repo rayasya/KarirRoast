@@ -54,13 +54,14 @@ def build_rag_index(cv_text: str, api_key: str) -> CVVectorStore:
     ]
 
     vectorstore = None
-    embedding_models = ["models/gemini-embedding-2", "models/text-embedding-004"]
+    clean_key = api_key.strip().strip('"').strip("'") if api_key else ""
+    embedding_models = ["models/text-embedding-004", "models/embedding-001"]
 
     for model_name in embedding_models:
         try:
             embeddings = GoogleGenerativeAIEmbeddings(
                 model=model_name,
-                google_api_key=api_key
+                google_api_key=clean_key
             )
             vectorstore = FAISS.from_documents(documents, embeddings)
             break

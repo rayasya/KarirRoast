@@ -26,23 +26,32 @@ Proyek ini dibangun dengan memadukan teknologi modern LLM, RAG, dan UI interakti
 | Komponen | Teknologi | Implementasi |
 | :--- | :--- | :--- |
 | **Multimodal & LLM Foundation** | Google Gemini (`google-genai` SDK) | • Ekstraksi dokumen PDF CV (`PyMuPDF`)<br>• Dynamic Persona & System Instructions<br>• Temperature tuning berdasarkan level kepedasan roast (Mild, Spicy, Extra Hot) |
-| **RAG & Vector Search** | LangChain & FAISS | • Chunking dokumen dengan `RecursiveCharacterTextSplitter`<br>• Embeddings dengan `GoogleGenerativeAIEmbeddings`<br>• Vektorisasi in-memory dengan `FAISS`<br>• Context retrieval untuk pembuktian klaim kandidat di chat |
+| **RAG & Vector Search** | LangChain & FAISS | • Chunking dokumen dengan `RecursiveCharacterTextSplitter`<br>• Embeddings mutakhir dengan `gemini-embedding-2` (MRL 768 dimensi)<br>• Vektorisasi in-memory dengan `FAISS`<br>• Context retrieval untuk pembuktian klaim kandidat di chat |
 | **User Interface & State** | Streamlit | • Chatbot interaktif multi-turn dengan streaming respons real-time<br>• State persistence (`st.session_state`) untuk chat, vectorstore, dan evaluasi<br>• Custom modern dark UI layout |
 
 ---
 
 ## 🎭 3. Persona AI yang Tersedia
 
+Setiap persona membawa sudut pandang, kepribadian, dan gaya interaksi yang berbeda. Pemilihan persona ini secara dinamis mempengaruhi analisis di **Instant Roasting**, lawan bicara di **Arena Baku Hantam (Chat)**, hingga perspektif penilaian di **Job Description Matcher**:
+
 1. 😈 **HRD Savage (Roaster & Debat):**
-   - Recruiter senior yang lelah membaca 10.000 CV klise.
-   - Siap baku hantam di chat jika pengguna membela diri, namun tetap memberikan *Tough Love* jika diminta solusi perbaikan.
-   - Memiliki **3 Tingkat Kepedasan**: *Level 1 (Mild)*, *Level 2 (Spicy)*, dan *Level 3 (Extra Hot / Neraka Jahanam)*.
-2. 🔮 **Dukun Primbon Karir:**
-   - Menganalisis CV dari kacamata weton teknologi, khodam programming, dan aura jodoh industri (startup vs korporat).
+   - Recruiter senior yang lelah membaca puluhan ribu CV klise dan penuh buzzword kosong.
+   - Siap baku hantam di chat jika pengguna membela diri, namun tetap memberikan *Tough Love* (solusi perbaikan konkret metode STAR) jika diminta dengan tulus.
+   - Memiliki **3 Tingkat Kepedasan**: *Level 1 (Mild / Sindir Sopan)*, *Level 2 (Spicy / HRD Jaksel Julid)*, dan *Level 3 (Extra Hot / Neraka Jahanam Tanpa Ampun 🔥)*.
+
+2. 🔮 **Dukun Primbon Karir (Mbah Broto):**
+   - Konsultan gaib HRD & pembaca aura spiritual rezeki kandidat.
+   - Menganalisis CV dari kacamata weton teknologi, perseteruan khodam programming (contoh: khodam Python bentrok dengan CSS), dan aura jodoh industri (startup bakar duit, korporat birokratis, atau jualan seblak).
+   - Memberikan saran "ruwatan karir" agar berkas pengguna terhindar dari santet penolakan ATS.
+
 3. 👔 **Konsultan ATS & Karir Pro:**
-   - Evaluasi formal berstandar internasional: Skor ATS (0–100), kelemahan format STAR, dan revisi sebelum-sesudah.
+   - Evaluasi formal berstandar internasional tanpa sindiran atau sarkasme.
+   - Memberikan Skor Keterbacaan ATS (0–100) dengan justifikasi teknis, 3 kelemahan format/action verbs, audit metode STAR, dan rekomendasi perbaikan sebelum-sesudah (*Before vs After rewrite*).
+
 4. 🥊 **Interviewer Muka Tembok:**
-   - Simulasi wawancara teknis kerja: satu pertanyaan tajam per sesi berbasis kelemahan di CV.
+   - Simulasi wawancara kerja killer ala VP of Engineering yang berwajah dingin dan kritis.
+   - Mengajukan satu pertanyaan paling menjebak per giliran berdasarkan kelemahan CV, serta menyusun lembar audit screening teknis objektif pada Job Matcher.
 
 ---
 

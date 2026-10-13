@@ -73,11 +73,11 @@ st.markdown(
     .hero-banner {
         position: relative;
         background: linear-gradient(145deg, #131826 0%, #0d111a 100%);
-        padding: 2.2rem 2.4rem;
+        padding: 1.6rem 2rem;
         border-radius: 18px;
         border: 1px solid rgba(255, 255, 255, 0.08);
         box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-        margin-bottom: 1.6rem;
+        margin-bottom: 1.2rem;
         overflow: hidden;
     }
     .hero-banner::after {
@@ -144,6 +144,128 @@ st.markdown(
         background: rgba(168, 85, 247, 0.1);
         color: #c084fc;
         border: 1px solid rgba(168, 85, 247, 0.25);
+    }
+
+    /* Onboarding Welcome Card */
+    .onboarding-card {
+        background: linear-gradient(145deg, rgba(20, 26, 42, 0.95) 0%, rgba(13, 17, 28, 0.98) 100%);
+        border: 1px solid rgba(255, 90, 54, 0.25);
+        border-radius: 18px;
+        padding: 1.8rem 2.2rem;
+        margin-top: 0.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 12px 36px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+    .onboarding-badge {
+        display: inline-block;
+        background: rgba(255, 90, 54, 0.15);
+        color: #ff7a59;
+        font-size: 0.78rem;
+        font-weight: 700;
+        padding: 0.25rem 0.8rem;
+        border-radius: 9999px;
+        border: 1px solid rgba(255, 90, 54, 0.32);
+        margin-bottom: 0.6rem;
+        letter-spacing: 0.02em;
+    }
+    .onboarding-title {
+        font-size: 1.45rem;
+        font-weight: 800;
+        color: #ffffff;
+        margin: 0 0 0.4rem 0;
+        letter-spacing: -0.02em;
+    }
+    .onboarding-desc {
+        font-size: 0.93rem;
+        color: #94a3b8;
+        margin: 0 0 1.3rem 0;
+        line-height: 1.5;
+    }
+    .steps-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+    }
+    .step-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        background: rgba(255, 255, 255, 0.025);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 13px;
+        padding: 1rem 1.25rem;
+        transition: all 0.2s ease;
+    }
+    .step-item:hover {
+        background: rgba(255, 255, 255, 0.045);
+        border-color: rgba(255, 122, 89, 0.35);
+    }
+    .step-number {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #ff5a36 0%, #ff7a59 100%);
+        color: #ffffff;
+        font-size: 0.85rem;
+        font-weight: 800;
+        flex-shrink: 0;
+        box-shadow: 0 2px 8px rgba(255, 90, 54, 0.35);
+    }
+    .step-content {
+        flex: 1;
+    }
+    .step-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #f1f5f9;
+        margin-bottom: 0.25rem;
+    }
+    .step-text {
+        font-size: 0.86rem;
+        color: #94a3b8;
+        line-height: 1.5;
+    }
+    .step-text a {
+        color: #ff7a59;
+        text-decoration: none;
+        font-weight: 600;
+    }
+    .step-text a:hover {
+        text-decoration: underline;
+    }
+    .persona-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.65rem;
+    }
+    .chip {
+        display: inline-flex;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        padding: 0.35rem 0.7rem;
+        font-size: 0.8rem;
+        color: #cbd5e1;
+    }
+    .chip b {
+        color: #ffffff;
+        margin-right: 4px;
+    }
+    .onboarding-footer {
+        margin-top: 1.2rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #ff8264;
+        font-size: 0.88rem;
+        font-weight: 600;
     }
 
     /* Modern Segmented Interactive Tabs (Tampak Jelas Bisa Diklik) */
@@ -325,7 +447,7 @@ if "job_match_result" not in st.session_state:
 # ── Sidebar ─────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("### 🔥 **Pengaturan KarirRoast**")
-    
+
     # 1. API Key Input & Pilihan Model Gemini
     st.markdown("#### 🔑 **Google Gemini API**")
     env_key = os.getenv("GOOGLE_API_KEY", "")
@@ -335,35 +457,27 @@ with st.sidebar:
         type="password",
         help="Dapatkan API Key gratis di Google AI Studio (aistudio.google.com)",
     )
-    # Otomatis bersihkan spasi dan petik ekstra
     api_key = raw_api_key.strip().strip('"').strip("'") if raw_api_key else ""
-    
-    # Link bantuan untuk mendapatkan API Key
+
     st.markdown(
-        """<div style="margin-top: -6px; margin-bottom: 12px;">
-            <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: #ff7b54; font-size: 0.83rem; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+        """<div style="margin-top: -6px; margin-bottom: 10px;">
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: #ff7b54; font-size: 0.8rem; text-decoration: none; font-weight: 600;">
                 🔑 Dapatkan Google API Key Gratis disini ↗
             </a>
         </div>""",
         unsafe_allow_html=True,
     )
 
-    # Mengambil daftar model secara dinamis dari API Key
     model_data = fetch_gemini_models_data(api_key)
     model_options = model_data["models"]
     is_dynamic = model_data["is_dynamic"]
     error_msg = model_data["error_msg"]
 
-    # Tentukan index default model pilihan
     default_idx = 0
-    if "gemini-3.5-flash" in model_options:
-        default_idx = model_options.index("gemini-3.5-flash")
-    elif "gemini-2.5-flash" in model_options:
-        default_idx = model_options.index("gemini-2.5-flash")
-    elif "gemini-2.0-flash" in model_options:
-        default_idx = model_options.index("gemini-2.0-flash")
-    elif "gemini-1.5-flash" in model_options:
-        default_idx = model_options.index("gemini-1.5-flash")
+    for cand in ["gemini-3.5-flash", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]:
+        if cand in model_options:
+            default_idx = model_options.index(cand)
+            break
 
     selected_model = st.selectbox(
         "🤖 Model Gemini:",
@@ -375,11 +489,8 @@ with st.sidebar:
     if not api_key:
         st.warning("⚠️ Masukkan Google API Key untuk mengaktifkan AI.", icon="🔑")
     elif is_dynamic:
-        st.caption(f"✨ *{len(model_options)} model aktif terdeteksi dari API Key Anda.*")
-    else:
-        if error_msg:
-            st.error(f"❌ {error_msg}")
-            st.info("⏳ **Tips:** Jika key ini baru saja Anda buat di Google AI Studio, tunggu sekitar 30–60 detik agar server Google selesai melakukan propagasi secara global.", icon="💡")
+        st.caption(f"✨ *{len(model_options)} model aktif terdeteksi.*")
+    elif error_msg:
         st.caption("ℹ️ *Menggunakan preset model default.*")
 
     # Tombol Reset Chat & Data tepat di bawah pilihan model
@@ -395,14 +506,16 @@ with st.sidebar:
     st.markdown("#### 📄 **Pilih Dokumen CV**")
     cv_source_mode = st.radio(
         "Sumber CV:",
-        ["Gunakan Contoh CV (Rayasya CV)", "Upload PDF Sendiri"],
+        ["Gunakan Contoh CV", "Upload PDF Sendiri"],
         index=0,
+        horizontal=True,
+        label_visibility="collapsed",
     )
 
     pdf_file_to_process = None
     target_name = None
 
-    if cv_source_mode == "Gunakan Contoh CV (Rayasya CV)":
+    if cv_source_mode == "Gunakan Contoh CV":
         sample_path = "sample_cv.pdf"
         if os.path.exists(sample_path):
             target_name = "sample_cv.pdf"
@@ -410,7 +523,7 @@ with st.sidebar:
         else:
             st.error("File sample_cv.pdf tidak ditemukan di direktori proyek.")
     else:
-        uploaded_file = st.file_uploader("Upload CV (Format PDF)", type=["pdf"])
+        uploaded_file = st.file_uploader("Upload CV (Format PDF)", type=["pdf"], label_visibility="collapsed")
         if uploaded_file is not None:
             target_name = uploaded_file.name
             pdf_file_to_process = uploaded_file
@@ -434,34 +547,35 @@ with st.sidebar:
             except Exception as e:
                 st.error(f"Gagal memproses PDF: {e}")
 
-    # Indikator CV yang sedang aktif
+    # Indikator CV aktif yang ringkas (1 baris)
     if st.session_state.cv_data:
-        st.info(
-            f"📌 **CV Aktif:** `{st.session_state.active_file_name}`\n\n"
-            f"• Total Halaman: **{st.session_state.cv_data['total_pages']}**\n"
-            f"• Estimasi Kata: **{st.session_state.cv_data['word_count']}** kata\n"
-            f"• Status RAG: {'✅ Siap Indeks' if st.session_state.vectorstore else '⏳ Menunggu API Key'}"
+        st.success(
+            f"📄 **{st.session_state.active_file_name}** ({st.session_state.cv_data['total_pages']} hal · {st.session_state.cv_data['word_count']} kata)",
+            icon="✅"
         )
 
     st.divider()
 
-    # 3. Persona & Konfigurasi AI
+    # 3. Persona AI & Level Kepedasan
     st.markdown("#### 🎭 **Pilih Persona AI**")
     persona_options = {
         "hrd_savage": "😈 HRD Savage (Roaster & Debat)",
-        "dukun_karir": "🔮 Dukun Primbon Karir",
+        "dukun_karir": "🔮 Dukun Primbon Karir (Mbah Broto)",
         "ats_pro": "👔 Konsultan ATS & Karir Pro",
         "mock_interviewer": "🥊 Interviewer Muka Tembok",
     }
-    
+
     selected_persona_key = st.selectbox(
-        "Persona AI:",
+        "Karakter Persona:",
         options=list(persona_options.keys()),
         format_func=lambda k: persona_options[k],
         index=0,
+        label_visibility="collapsed",
+        help="Pilih persona AI yang akan mengevaluasi CV, berdebat di chat, dan menilai kecocokan lowongan.",
     )
+    current_persona_info = PERSONA_PROMPTS[selected_persona_key]
+    st.caption(f"💡 *{current_persona_info['tagline']}*")
 
-    # Tingkat Kepedasan (Khusus HRD Savage)
     spicy_level = 2
     if selected_persona_key == "hrd_savage":
         spicy_level = st.slider(
@@ -471,7 +585,9 @@ with st.sidebar:
             value=2,
             help="1: Menyindir Halus, 2: HRD Jaksel Julid, 3: Neraka Jahanam (Tanpa Ampun 🔥)",
         )
-        st.caption(SPICY_LEVELS[spicy_level])
+        st.caption(f"🔥 *{SPICY_LEVELS[spicy_level]}*")
+
+
 
 # ── Header Banner ───────────────────────────────────────────────────────────
 st.markdown(
@@ -479,7 +595,7 @@ st.markdown(
     <div class="hero-banner">
         <div class="hero-title">🔥 KarirRoast AI</div>
         <div class="hero-subtitle">
-            Platform AI Roaster, Simulator Debat HRD, & Career Wingman Berbasis RAG (LangChain + FAISS + Gemini)
+            Platform AI Roaster, Simulator Debat HRD, & Career Wingman Berbasis RAG (LangChain + FAISS + Gemini) <br>Buat lucu lucuan aja yagesyakk :)
         </div>
         <div class="badge-container">
             <span class="badge badge-fire">🔥 Multimodal CV Roaster</span>
@@ -493,11 +609,54 @@ st.markdown(
 
 # Cek prasyarat sebelum mulai
 if not api_key:
-    st.info("🗝️ **Silakan masukkan Google AI Studio API Key di sidebar sebelah kiri untuk mulai.**", icon="👉")
+    st.html(
+        """<div class="onboarding-card">
+<div class="onboarding-header">
+<span class="onboarding-badge">🚀 Panduan Cepat Memulai</span>
+<h3 class="onboarding-title">Selamat Datang di KarirRoast AI!</h3>
+<p class="onboarding-desc">Lengkapi 3 langkah mudah pada sidebar di sebelah kiri untuk mengaktifkan AI dan memulai analisis:</p>
+</div>
+<div class="steps-container">
+<div class="step-item">
+<div class="step-number">1</div>
+<div class="step-content">
+<div class="step-title">Masukkan Google AI Studio API Key</div>
+<div class="step-text">Dapatkan API Key gratis di <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio ↗</a> lalu masukkan pada form API di sidebar kiri.</div>
+</div>
+</div>
+<div class="step-item">
+<div class="step-number">2</div>
+<div class="step-content">
+<div class="step-title">Pilih Dokumen CV</div>
+<div class="step-text">Pilih <b>Gunakan Contoh CV</b> untuk coba instan, atau pilih <b>Upload PDF Sendiri</b> untuk menguji CV aslimu.</div>
+</div>
+</div>
+<div class="step-item">
+<div class="step-number">3</div>
+<div class="step-content">
+<div class="step-title">Pilih Persona AI Favorit</div>
+<div class="step-text">Sesuaikan karakter evaluator & lawan bicara yang kamu inginkan:</div>
+<div class="persona-chips">
+<span class="chip">😈 <b>HRD Savage:</b> Roaster julid 3 level kepedasan</span>
+<span class="chip">🔮 <b>Mbah Broto:</b> Dukun weton tech & ramal aura</span>
+<span class="chip">👔 <b>ATS Pro:</b> Evaluasi objektif standar korporat</span>
+<span class="chip">🥊 <b>Interviewer:</b> Mock interview teknis killer</span>
+</div>
+</div>
+</div>
+</div>
+<div class="onboarding-footer">
+👉 <span><b>Buka menu di sidebar sebelah kiri</b> untuk mengisi API Key dan mulai sesi!</span>
+</div>
+</div>"""
+    )
     st.stop()
 
 if not st.session_state.cv_data:
-    st.warning("📄 **Silakan pilih atau upload dokumen CV di sidebar untuk melanjutkan.**", icon="⚠️")
+    st.warning(
+        "📄 **Dokumen CV belum dipilih.** Silakan pilih opsi **Gunakan Contoh CV** atau unggah berkas PDF CV Anda pada menu sidebar sebelah kiri untuk memulai analisis.",
+        icon="⚠️"
+    )
     st.stop()
 
 # Buat ulang RAG index jika belum ada tapi API Key sudah tersedia
@@ -505,21 +664,6 @@ if st.session_state.vectorstore is None and st.session_state.cv_data:
     with st.spinner("Mengindeks CV ke dalam Vector Database (FAISS)..."):
         st.session_state.vectorstore = build_rag_index(st.session_state.cv_data["full_text"], api_key)
 
-# ── Navigasi Mode Fitur ──────────────────────────────────────────────────────
-st.markdown(
-    """<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.6rem; margin-bottom: 0.55rem; padding: 0 4px;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; background: rgba(255, 90, 54, 0.2); border-radius: 6px; font-size: 0.85rem;">👆</span>
-            <span style="font-size: 0.88rem; font-weight: 700; letter-spacing: 0.01em; color: #f1f5f9;">
-                PILIH FITUR: <span style="color: #ff7a59; font-weight: 500; font-size: 0.82rem;">(Klik salah satu tombol tab di bawah untuk berganti mode)</span>
-            </span>
-        </div>
-        <span style="font-size: 0.76rem; color: #94a3b8; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); padding: 3px 10px; border-radius: 20px; font-weight: 500;">
-            ⚡ 4 Mode Tersedia
-        </span>
-    </div>""",
-    unsafe_allow_html=True,
-)
 
 tab_audit, tab_chat, tab_jd, tab_preview = st.tabs([
     "💥 Instant Roasting & Audit",

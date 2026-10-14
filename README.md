@@ -17,7 +17,7 @@
       <img src="assets/promo_thumbnail.jpg" alt="Tonton Video Demo KarirRoast" width="100%" style="border-radius: 12px;" />
     </a>
   </video>
-  <p><em>📺 <strong>Tonton Video Promosi KarirRoast AI</strong> (Dibuat secara programatik menggunakan Remotion & React di resolusi 1080p 30 FPS). Jika pemutar tidak muncul di browsermu, klik poster atau <a href="assets/KarirRoastPromo.mp4">buka berkas MP4 langsung</a>.</em></p>
+  <p><em>📺 <strong>Tonton Video Promosi KarirRoast AI</strong>Jika pemutar tidak muncul di browsermu, <a href="assets/KarirRoastPromo.mp4">buka berkas MP4 langsung</a>.</em></p>
 </div>
 
 ---

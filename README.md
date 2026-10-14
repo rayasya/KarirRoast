@@ -11,14 +11,7 @@
 
 ## 🎬 Sneak peek
 
-<div align="center">
-  <video src="assets/KarirRoastPromo.mp4" poster="assets/promo_thumbnail.jpg" width="100%" controls style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-    <a href="assets/KarirRoastPromo.mp4">
-      <img src="assets/promo_thumbnail.jpg" alt="Tonton Video Demo KarirRoast" width="100%" style="border-radius: 12px;" />
-    </a>
-  </video>
-  <p><em>📺 <strong>Tonton Video Promosi KarirRoast AI</strong>Jika pemutar tidak muncul di browsermu, <a href="assets/KarirRoastPromo.mp4">buka berkas MP4 langsung</a>.</em></p>
-</div>
+https://github.com/user-attachments/assets/c4a6c228-229f-49b7-bb3b-0401ea2caa7e
 
 ---
 
@@ -128,9 +121,6 @@ Setiap persona membawa sudut pandang, kepribadian, dan gaya interaksi yang berbe
 
 ```
 KarirRoast/
-├── assets/                     # Video demo promosi & aset grafis
-│   ├── KarirRoastPromo.mp4    # Video promosi
-│   └── promo_thumbnail.jpg    # Cover poster thumbnail
 ├── .venv/                      # Virtual environment lokal
 ├── core/
 │   ├── __init__.py

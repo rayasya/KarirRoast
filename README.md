@@ -9,12 +9,26 @@
 
 ---
 
+## 🎬 Sneak peek
+
+<div align="center">
+  <video src="assets/KarirRoastPromo.mp4" poster="assets/promo_thumbnail.jpg" width="100%" controls style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+    <a href="assets/KarirRoastPromo.mp4">
+      <img src="assets/promo_thumbnail.jpg" alt="Tonton Video Demo KarirRoast" width="100%" style="border-radius: 12px;" />
+    </a>
+  </video>
+  <p><em>📺 <strong>Tonton Video Promosi KarirRoast AI</strong> (Dibuat secara programatik menggunakan Remotion & React di resolusi 1080p 30 FPS). Jika pemutar tidak muncul di browsermu, klik poster atau <a href="assets/KarirRoastPromo.mp4">buka berkas MP4 langsung</a>.</em></p>
+</div>
+
+---
+
 ## 📌 1. Tentang KarirRoast
 
 Banyak pelamar kerja bingung mengapa CV mereka jarang tembus screening HRD atau lolos filter ATS. Feedback dari recruiter pun seringkali normatif dan kaku.
 
 **KarirRoast** hadir untuk mengubah proses review CV menjadi interaktif, menghibur, sekaligus berbobot teknis:
-- **Bukan sekadar *one-shot roaster***: Pengguna bisa **mendebat balik** AI di kolom chat secara interaktif. AI akan mencari bukti nyata dari isi CV kandidat menggunakan **RAG (Retrieval-Augmented Generation)** untuk mematahkan dalih pengguna.
+
+- **Bukan sekadar _one-shot roaster_**: Pengguna bisa **mendebat balik** AI di kolom chat secara interaktif. AI akan mencari bukti nyata dari isi CV kandidat menggunakan **RAG (Retrieval-Augmented Generation)** untuk mematahkan dalih pengguna.
 - **Tough Love**: Di balik roasting pedas, AI menyediakan solusi konkret (revisi bullet point metode STAR, evaluasi ATS, dan simulasi interview).
 
 ---
@@ -23,11 +37,11 @@ Banyak pelamar kerja bingung mengapa CV mereka jarang tembus screening HRD atau 
 
 Proyek ini dibangun dengan memadukan teknologi modern LLM, RAG, dan UI interaktif:
 
-| Komponen | Teknologi | Implementasi |
-| :--- | :--- | :--- |
-| **Multimodal & LLM Foundation** | Google Gemini (`google-genai` SDK) | • Ekstraksi dokumen PDF CV (`PyMuPDF`)<br>• Dynamic Persona & System Instructions<br>• Temperature tuning berdasarkan level kepedasan roast (Mild, Spicy, Extra Hot) |
-| **RAG & Vector Search** | LangChain & FAISS | • Chunking dokumen dengan `RecursiveCharacterTextSplitter`<br>• Embeddings mutakhir dengan `gemini-embedding-2` (MRL 768 dimensi)<br>• Vektorisasi in-memory dengan `FAISS`<br>• Context retrieval untuk pembuktian klaim kandidat di chat |
-| **User Interface & State** | Streamlit | • Chatbot interaktif multi-turn dengan streaming respons real-time<br>• State persistence (`st.session_state`) untuk chat, vectorstore, dan evaluasi<br>• Custom modern dark UI layout |
+| Komponen                        | Teknologi                          | Implementasi                                                                                                                                                                                                                               |
+| :------------------------------ | :--------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Multimodal & LLM Foundation** | Google Gemini (`google-genai` SDK) | • Ekstraksi dokumen PDF CV (`PyMuPDF`)<br>• Dynamic Persona & System Instructions<br>• Temperature tuning berdasarkan level kepedasan roast (Mild, Spicy, Extra Hot)                                                                       |
+| **RAG & Vector Search**         | LangChain & FAISS                  | • Chunking dokumen dengan `RecursiveCharacterTextSplitter`<br>• Embeddings mutakhir dengan `gemini-embedding-2` (MRL 768 dimensi)<br>• Vektorisasi in-memory dengan `FAISS`<br>• Context retrieval untuk pembuktian klaim kandidat di chat |
+| **User Interface & State**      | Streamlit                          | • Chatbot interaktif multi-turn dengan streaming respons real-time<br>• State persistence (`st.session_state`) untuk chat, vectorstore, dan evaluasi<br>• Custom modern dark UI layout                                                     |
 
 ---
 
@@ -37,8 +51,8 @@ Setiap persona membawa sudut pandang, kepribadian, dan gaya interaksi yang berbe
 
 1. 😈 **HRD Savage (Roaster & Debat):**
    - Recruiter senior yang lelah membaca puluhan ribu CV klise dan penuh buzzword kosong.
-   - Siap baku hantam di chat jika pengguna membela diri, namun tetap memberikan *Tough Love* (solusi perbaikan konkret metode STAR) jika diminta dengan tulus.
-   - Memiliki **3 Tingkat Kepedasan**: *Level 1 (Mild / Sindir Sopan)*, *Level 2 (Spicy / HRD Jaksel Julid)*, dan *Level 3 (Extra Hot / Neraka Jahanam Tanpa Ampun 🔥)*.
+   - Siap baku hantam di chat jika pengguna membela diri, namun tetap memberikan _Tough Love_ (solusi perbaikan konkret metode STAR) jika diminta dengan tulus.
+   - Memiliki **3 Tingkat Kepedasan**: _Level 1 (Mild / Sindir Sopan)_, _Level 2 (Spicy / HRD Jaksel Julid)_, dan _Level 3 (Extra Hot / Neraka Jahanam Tanpa Ampun 🔥)_.
 
 2. 🔮 **Dukun Primbon Karir (Mbah Broto):**
    - Konsultan gaib HRD & pembaca aura spiritual rezeki kandidat.
@@ -47,7 +61,7 @@ Setiap persona membawa sudut pandang, kepribadian, dan gaya interaksi yang berbe
 
 3. 👔 **Konsultan ATS & Karir Pro:**
    - Evaluasi formal berstandar internasional tanpa sindiran atau sarkasme.
-   - Memberikan Skor Keterbacaan ATS (0–100) dengan justifikasi teknis, 3 kelemahan format/action verbs, audit metode STAR, dan rekomendasi perbaikan sebelum-sesudah (*Before vs After rewrite*).
+   - Memberikan Skor Keterbacaan ATS (0–100) dengan justifikasi teknis, 3 kelemahan format/action verbs, audit metode STAR, dan rekomendasi perbaikan sebelum-sesudah (_Before vs After rewrite_).
 
 4. 🥊 **Interviewer Muka Tembok:**
    - Simulasi wawancara kerja killer ala VP of Engineering yang berwajah dingin dan kritis.
@@ -61,18 +75,21 @@ Setiap persona membawa sudut pandang, kepribadian, dan gaya interaksi yang berbe
 - **💬 Arena Baku Hantam (Interactive Chat & RAG):** Chat multi-turn yang dilengkapi tombol expander untuk melihat bukti potongan CV yang ditemukan oleh vektor FAISS.
 - **🎯 Job Description Matcher:** Bandingkan CV dengan kualifikasi lowongan kerja riil untuk melihat skill gap dan persentase kelolosan.
 - **📄 Preview Teks CV:** Verifikasi hasil ekstraksi per halaman dari dokumen yang diunggah.
-- **⚡ Instant Demo:** Menyediakan opsi *"Gunakan Contoh CV"* sehingga demo dapat langsung dicoba tanpa perlu repot mencari file PDF.
+- **⚡ Instant Demo:** Menyediakan opsi _"Gunakan Contoh CV"_ sehingga demo dapat langsung dicoba tanpa perlu repot mencari file PDF.
 
 ---
 
 ## 🛠️ 5. Cara Instalasi & Menjalankan
 
 ### Prasyarat:
+
 - Python 3.10+
 - Google AI Studio API Key (dapat diperoleh gratis di [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey))
 
 ### Langkah-langkah:
+
 1. Clone repository dan masuk ke direktori proyek:
+
    ```bash
    git clone https://github.com/rayasya/KarirRoast.git
    cd KarirRoast
@@ -91,12 +108,14 @@ Setiap persona membawa sudut pandang, kepribadian, dan gaya interaksi yang berbe
      ```
 
 3. Install seluruh pustaka (dependencies):
+
    ```bash
    pip install --upgrade pip
    pip install -r requirements.txt
    ```
 
 4. Jalankan aplikasi Streamlit:
+
    ```bash
    streamlit run app.py
    ```
@@ -109,6 +128,9 @@ Setiap persona membawa sudut pandang, kepribadian, dan gaya interaksi yang berbe
 
 ```
 KarirRoast/
+├── assets/                     # Video demo promosi & aset grafis
+│   ├── KarirRoastPromo.mp4    # Video promosi
+│   └── promo_thumbnail.jpg    # Cover poster thumbnail
 ├── .venv/                      # Virtual environment lokal
 ├── core/
 │   ├── __init__.py
